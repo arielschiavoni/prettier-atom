@@ -1,27 +1,39 @@
-jest.mock('../atomInterface');
+jest.mock('../editorInterface');
 
-const { addErrorNotification, shouldDisplayErrors } = require('../atomInterface');
+const { getCurrentFilePath } = require('../editorInterface');
+const linterInterface = require('../linterInterface');
 const handleError = require('./handleError');
 
-it('displays an error notification is shouldDisplayErrors is true', () => {
+const buildFakeError = () => {
   const error = new Error('fake error');
-  shouldDisplayErrors.mockImplementation(() => true);
+  error.loc = { start: { line: 1, column: 1 } };
 
-  handleError(error);
+  return error;
+};
 
-  const message = addErrorNotification.mock.calls[0][0];
-  const options = addErrorNotification.mock.calls[0][1];
+it('sets an error message in the indie-linter', () => {
+  const error = buildFakeError();
+  const fakeFilePath = '/fake/file/path.js';
+  getCurrentFilePath.mockImplementation(() => fakeFilePath);
+  const editor = null;
+  const mockLinter = { setMessages: jest.fn() };
+  linterInterface.set(mockLinter);
 
-  expect(message).toMatch('prettier-atom');
-  expect(options.dismissable).toBe(true);
-  expect(options.detail).toEqual(error.toString());
-});
+  handleError(editor, error);
 
-it('does not notify if shouldDisplayErrors is false', () => {
-  const error = new Error('fake error');
-  shouldDisplayErrors.mockImplementation(() => false);
+  const expectedMessages = [
+    {
+      location: {
+        file: fakeFilePath,
+        position: {
+          start: { row: 1, column: 1 },
+          end: { row: 1, column: 1 },
+        },
+      },
+      excerpt: 'Syntax Error',
+      severity: 'error',
+    },
+  ];
 
-  handleError(error);
-
-  expect(addErrorNotification).not.toHaveBeenCalled();
+  expect(mockLinter.setMessages).toHaveBeenCalledWith(fakeFilePath, expectedMessages);
 });

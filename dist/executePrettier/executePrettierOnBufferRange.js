@@ -28,7 +28,7 @@ var executePrettierOrPrettierEslint = function executePrettierOrPrettierEslint(e
   try {
     return shouldUseEslint() ? executePrettierEslint(editor, text) : executePrettier(editor, text);
   } catch (error) {
-    return handleError(error);
+    return handleError(editor, error);
   }
 };
 

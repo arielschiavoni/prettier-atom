@@ -18,7 +18,7 @@ const executePrettierOrPrettierEslint = (editor: TextEditor, text: string) => {
   try {
     return shouldUseEslint() ? executePrettierEslint(editor, text) : executePrettier(editor, text);
   } catch (error) {
-    return handleError(error);
+    return handleError(editor, error);
   }
 };
 
